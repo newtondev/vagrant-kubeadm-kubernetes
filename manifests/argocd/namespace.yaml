@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-cd-infra
+  labels:
+    bol-application: argo-cd-infra
+    bol-customer-facing: 'false'
+    bol-environment: sbx
+    bol-is-financial: 'false'
+    bol-node-class: internal
+    bol-opex: teamcicd
+    bol-pii-level: none
+    bol-projecttype: infra
+    bol-r2d2-project: bolcom-rklenv
+    bol-space: platform
+    bol-status: operational
+    istio-injection: enabled
+    pod-security.kubernetes.io/enforce: restricted
+  annotations:
+    r2d2.bol.io/trustees: "[]"

@@ -5,6 +5,9 @@
 set -euxo pipefail
 
 # Variable Declaration
+OS=linux
+ARCH=amd64
+
 
 # DNS Setting
 if [ ! -d /etc/systemd/resolved.conf.d ]; then
@@ -66,6 +69,12 @@ echo "CRI runtime installed successfully"
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v$KUBERNETES_VERSION_SHORT/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$KUBERNETES_VERSION_SHORT/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+curl -sL https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-${ARCH}.tar.gz | tar -xvz && \
+    mv ${OS}-${ARCH}/helm /usr/local/bin/helm && \
+    chown root:root /usr/local/bin/helm && \
+    chmod +x /usr/local/bin/helm && \
+    rm -rf ${OS}-${ARCH}
 
 
 sudo apt-get update -y

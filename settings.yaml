@@ -32,7 +32,10 @@ nodes:
 software:
   box: bento/ubuntu-22.04
   calico: 3.26.0
+  kubernetes: 1.29.0-*
+  helm: 3.14.2
+  os: xUbuntu_22.04
   # To skip the dashboard installation, set its version to an empty value or comment it out:
   dashboard: 2.7.0
-  kubernetes: 1.29.0-*
-  os: xUbuntu_22.04
+  # To skip the dashboard installation, set its version to an empty value or comment it out:
+  argocd: xxx

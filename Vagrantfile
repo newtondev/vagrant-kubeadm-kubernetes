@@ -47,6 +47,7 @@ Vagrant.configure("2") do |config|
         "ENVIRONMENT" => settings["environment"],
         "KUBERNETES_VERSION" => settings["software"]["kubernetes"],
         "KUBERNETES_VERSION_SHORT" => settings["software"]["kubernetes"][0..3],
+        "HELM_VERSION" => settings["software"]["helm"],
         "OS" => settings["software"]["os"]
       },
       path: "scripts/common.sh"
@@ -83,6 +84,7 @@ Vagrant.configure("2") do |config|
           "ENVIRONMENT" => settings["environment"],
           "KUBERNETES_VERSION" => settings["software"]["kubernetes"],
           "KUBERNETES_VERSION_SHORT" => settings["software"]["kubernetes"][0..3],
+          "HELM_VERSION" => settings["software"]["helm"],
           "OS" => settings["software"]["os"]
         },
         path: "scripts/common.sh"
@@ -91,6 +93,11 @@ Vagrant.configure("2") do |config|
       # Only install the dashboard after provisioning the last worker (and when enabled).
       if i == NUM_WORKER_NODES and settings["software"]["dashboard"] and settings["software"]["dashboard"] != ""
         node.vm.provision "shell", path: "scripts/dashboard.sh"
+      end
+
+      # Only install argocd after provisioning the last worker (and when enabled).
+      if i == NUM_WORKER_NODES and settings["software"]["argocd"] and settings["software"]["argocd"] != ""
+        node.vm.provision "shell", path: "scripts/argocd.sh"
       end
     end
 

@@ -1,0 +1,145 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- apply_resources.yaml
+- namespace.yaml
+- secret_repo-provisioning.yaml
+
+helmCharts:
+- name: argo-cd
+  valuesInLine:
+    crds:
+      install: true
+      keep: true
+    global:
+      image:
+        repository: quay.io/argoproj/argocd
+    configs:
+      cm:
+        kustomize.buildOptions: --enable-helm
+        timeout.reconciliation: 180s
+        timeout.reconciliation.jitter: 15s
+      params:
+        reposerver.repo.cache.expiration: 180s
+        server.insecure: "true"
+        applicationsetcontroller.enable.progressive.syncs: true
+    controller:
+      metrics:
+        enabled: true
+        service:
+          clusterIP: None
+          annotations:
+            networking.istio.io/exportTo: "~"
+        serviceMonitor:
+          enabled: false
+          additionalLabels:
+            prometheus: platform
+      env:
+      - name: ARGOCD_SYNC_WAVE_DELAY
+        value: "5"
+    server:
+      replicas: 1
+      metrics:
+        enabled: true
+        service:
+          clusterIP: None
+          annotations:
+            networking.istio.io/exportTo: "~"
+        serviceMonitor:
+          enabled: false
+          additionalLabels:
+            prometheus: platform
+    applicationSet:
+      metrics:
+        enabled: true
+        service:
+          clusterIP: None
+          annotations:
+            networking.istio.io/exportTo: "~"
+        serviceMonitor:
+          enabled: false
+          additionalLabels:
+            prometheus: platform
+    repoServer:
+      replicas: 1
+      metrics:
+        enabled: true
+        service:
+          clusterIP: None
+          annotations:
+            networking.istio.io/exportTo: "~"
+        serviceMonitor:
+          enabled: false
+          additionalLabels:
+            prometheus: platform
+    notifications:
+      metrics:
+        enabled: true
+        service:
+          clusterIP: None
+          annotations:
+            networking.istio.io/exportTo: "~"
+        serviceMonitor:
+          enabled: false
+          additionalLabels:
+            prometheus: platform
+    redis:
+      image:
+        repository: redis
+        tag: 7.0.14-alpine
+      metrics:
+        enabled: true
+        service:
+          clusterIP: None
+          annotations:
+            networking.istio.io/exportTo: "~"
+        serviceMonitor:
+          enabled: false
+          additionalLabels:
+            prometheus: platform
+
+      podAnnotations:
+        sidecar.istio.io/inject: "false"
+  releaseName: argocd
+  namespace: argo-cd-infra
+  version: 6.7.18
+  repo: https://argoproj.github.io/argo-helm
+
+patches:
+- target:
+    kind: ClusterRole
+    group: rbac.authorization.k8s.io
+    version: v1
+    name: argocd-application-controller
+  path: patch_cr_argocd-application-controller.yaml
+- target:
+    kind: ClusterRole
+    group: rbac.authorization.k8s.io
+    version: v1
+    name: argocd-notifications-controller
+  path: patch_cr_argocd-notifications-controller.yaml
+- target:
+    kind: ClusterRole
+    group: rbac.authorization.k8s.io
+    version: v1
+    name: argocd-server
+  path: patch_cr_argocd-server.yaml
+- target:
+    kind: ClusterRoleBinding
+    group: rbac.authorization.k8s.io
+    version: v1
+    name: argocd-application-controller
+  path: patch_crb_argocd-application-controller.yaml
+- target:
+    kind: ClusterRoleBinding
+    group: rbac.authorization.k8s.io
+    version: v1
+    name: argocd-notifications-controller
+  path: patch_crb_argocd-notifications-controller.yaml
+- target:
+    kind: ClusterRoleBinding
+    group: rbac.authorization.k8s.io
+    version: v1
+    name: argocd-server
+  path: patch_crb_argocd-server.yaml

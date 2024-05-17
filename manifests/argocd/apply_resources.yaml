@@ -1,0 +1,110 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: bolcom-rklenv2
+  namespace: argo-cd-infra
+spec:
+  goTemplate: true
+  goTemplateOptions:
+  - missingkey=error
+  generators:
+  - git:
+      repoURL: https://gitlab.stg.bol.io/tps/provisioning/sbx.git
+      revision: HEAD
+      files:
+      - path: "./clusters/bolcom-rklenv2/**/enabled.yaml"
+  strategy:
+    type: RollingSync
+    rollingSync:
+      steps:
+      - matchExpressions:
+        - key: stage
+          operator: In
+          values:
+          - one
+      - matchExpressions:
+        - key: stage
+          operator: In
+          values:
+          - two
+        maxUpdate: 20%
+      - matchExpressions:
+        - key: stage
+          operator: In
+          values:
+          - three
+        maxUpdate: 20%
+      - matchExpressions:
+        - key: stage
+          operator: In
+          values:
+          - four
+  template:
+    metadata:
+      name: "{{.appName}}"
+      labels:
+        stage: "{{.stage}}"
+    spec:
+      project: infra
+      source:
+        repoURL: https://gitlab.stg.bol.io/tps/provisioning/sbx.git
+        targetRevision: HEAD
+        path: "{{.path.path}}"
+      destination:
+        name: in-cluster
+        namespace: "{{.namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: false
+        retry:
+          limit: 10
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+        syncOptions:
+        - PruneLast=true
+        - CreateNamespace=false
+        - ApplyOutOfSyncOnly=true
+        - FailOnSharedResource=true
+        - RespectIgnoreDifferences=true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infra
+  namespace: argo-cd-infra
+spec:
+  clusterResourceWhitelist:
+  - group: "*"
+    kind: "*"
+  destinations:
+  - namespace: "*"
+    name: in-cluster
+  sourceRepos:
+  - https://gitlab.stg.bol.io/tps/provisioning/sbx.git
+  syncWindows:
+  - kind: allow
+    schedule: 0 8 * * 1-5
+    timeZone: Europe/Amsterdam
+    duration: 10h
+    applications:
+    - "*"
+  - kind: deny
+    schedule: 0 18 * * 1-5
+    timeZone: Europe/Amsterdam
+    duration: 14h
+    applications:
+    - "*"
+    manualSync: true
+  - kind: deny
+    schedule: "* 0 * * 0,6"
+    timeZone: Europe/Amsterdam
+    duration: 24h
+    applications:
+    - "*"
+    manualSync: true
+
